@@ -1,0 +1,143 @@
+#include <iostream>
+#include <vector>
+#include <iterator>
+
+class Heap {
+private:
+    std::vector<std::pair<int,int>> buf;
+    int GetLeft(int index) const;
+    int GetRight(int index) const;
+    int Top(int index) const;
+public:
+    Heap(std::vector<int>& window, int size, int start);
+    void HeapBuild(std::vector<int>& window, int size, int start);
+    ~Heap();
+    std::pair<int,int> GetMax() const;
+    void SiftUp(int index);
+    void SiftDown(int index);
+    void Push(int element, int priority);
+    int Pop();
+    void PopPrior(int priority);
+    void debug();
+};
+
+Heap::~Heap() {
+    buf.clear();
+}
+
+std::pair<int,int> Heap::GetMax() const {
+    return buf[0];
+}
+
+int Heap::GetLeft(int index) const {
+    if (2 * index + 1 < buf.size()) {
+        return 2 * index + 1;
+    }
+    else return buf.size();
+}
+
+int Heap::GetRight(int index) const{
+    if (2 * index + 2 < buf.size()) {
+        return 2 * index + 2;
+    }
+    else return buf.size();
+}
+
+void Heap::debug() {
+    std::cout << "debug: ";
+    for (int i = 0; i < buf.size(); ++i) {
+        std::cout << buf[i].first << " ";
+    }
+    std::cout << std::endl <<"indices: ";
+    for (int i = 0; i < buf.size(); ++i) {
+        std::cout << buf[i].second << " ";
+    }
+    std::cout << std::endl;
+}
+
+void Heap::SiftDown(int index) {					//correct
+    if (GetLeft(index) < buf.size() && GetRight(index) < buf.size()) {
+        if (buf[GetLeft(index)].first > buf[index].first || buf[GetRight(index)].first > buf[index].first) {
+            if (buf[GetLeft(index)].first > buf[GetRight(index)].first) {
+                std::swap(buf[GetLeft(index)], buf[index]);
+                SiftDown(GetLeft(index));
+            }
+            else {
+                std::swap(buf[GetRight(index)], buf[index]);
+                SiftDown(GetRight(index));
+            }
+        }
+    }
+    else if (GetLeft(index) < buf.size() && buf[GetLeft(index)].first > buf[index].first) {
+        std::swap(buf[GetLeft(index)], buf[index]);
+    }
+}
+
+Heap::Heap(std::vector<int>& window, int size, int start) { //correct
+    buf = std::vector<std::pair<int,int>>(size);
+    for (int i = 0; i < size; ++i) {
+        buf[i].first = window[i + start];
+        buf[i].second = i;
+    }
+    for (int i = size / 2 - 1; i >= 0; --i)
+        SiftDown(i);
+}
+
+int Heap::Top(int index) const{
+    if (index > 0) {
+        return (index - 1) / 2;
+    }
+    else
+        return index;
+}
+
+void Heap::SiftUp(int index) {
+    if (Top(index) < index) {
+        if (buf[Top(index)].first < buf[index].first) {
+            std::swap(buf[Top(index)], buf[index]);
+            SiftUp(Top(index));
+        }
+    }
+}
+
+void Heap::Push(int element, int priority) {
+    std::pair<int,int> new_element{element, priority};
+    buf.push_back(new_element);
+    SiftUp(buf.size() - 1);
+}
+
+int Heap::Pop() {
+    if (!buf.empty()) {
+        int value = buf[buf.size() - 1].first;
+        buf.pop_back();
+        return value;
+    } else
+        return -1;
+}
+
+void Heap::PopPrior(int priority) {
+    while(GetMax().second < priority) {
+        std::swap(buf[0],buf[buf.size() - 1]);
+        buf.pop_back();
+        SiftDown(0);
+    }
+}
+
+int main()
+{
+    int n, k;
+    std::cin >> n;
+    std::vector<int> input(n);
+    for (int i = 0; i < n; ++i) {
+        std::cin >> *(input.begin() + i);
+    }
+    std::cin >> k;
+    Heap heap(input, k, 0);
+    std::cout << heap.GetMax().first << " ";
+    for (int i = 1; i < n - k + 1; ++i) {
+        heap.Push(input[i + k - 1], i + k - 1);
+        heap.PopPrior(i);
+        std::cout << heap.GetMax().first << " ";
+    }
+        return 0;
+}
